@@ -1,0 +1,138 @@
+Project: Real-Time Collision Probability Estimator
+🎯 Objective
+Design a real-time Python system that:
+
+Captures webcam input from a laptop.
+
+Detects mobile phones (or similar objects) using YOLOv8n.
+
+Tracks objects across frames using ByteTrack.
+
+Estimates the probability of collision using a rule-based algorithm.
+
+Visualizes bounding boxes, object IDs, motion trails, and collision likelihood live.
+
+Runs efficiently on CPU-only systems (e.g., Intel Iris Xe, 16GB RAM).
+
+📦 Technology Stack
+Component	Tool
+Language	Python 3.10
+Package Manager	Conda
+Object Detection	YOLOv8n (Ultralytics)
+Tracking	ByteTrack
+Visualization	OpenCV
+Logic	Rule-based collision estimation
+CPU Optimization	Frame skipping, small models, low-resolution input
+
+⚙️ System Modules
+1. Video Capture
+Captures webcam frames using OpenCV.
+
+Reduces resolution to 480x360 or 320x240 for faster inference.
+
+2. Object Detection (YOLOv8n)
+Loads YOLOv8n with Ultralytics API.
+
+Runs every N frames to reduce compute load.
+
+3. Object Tracking (ByteTrack)
+Associates object detections across frames.
+
+Maintains object ID and tracks motion over time.
+
+Returns list of objects with:
+
+Bounding box
+
+ID
+
+Class
+
+Confidence
+
+4. Rule-Based Collision Probability
+For any two objects:
+
+Estimate velocity vectors using recent positions.
+
+Calculate distance between objects.
+
+Check for approaching movement using dot product:
+
+python
+Copy
+Edit
+np.dot(pos2 - pos1, vel2 - vel1) < 0
+Compute collision probability:
+
+python
+Copy
+Edit
+def collision_prob(dist):
+    return 1 / (1 + np.exp((dist - 50) / 10))
+5. Visualization
+Bounding boxes and labels (cv2.rectangle, cv2.putText)
+
+Object ID and trajectory lines (with deque)
+
+Real-time display of collision probability on frame
+
+🧱 Project Folder Structure
+pgsql
+Copy
+Edit
+collision_estimator/
+├── main.py                  # Entry point
+├── detector/
+│   └── yolov8_wrapper.py    # Loads and runs YOLOv8n
+├── tracker/
+│   └── bytetrack_wrapper.py # Wrapper to use ByteTrack with YOLO output
+├── logic/
+│   └── collision.py         # Rule-based probability calculation
+├── utils/
+│   └── visualizer.py        # OpenCV drawing functions
+├── data/                    # Test video data (optional)
+└── environment.yml          # Conda environment definition
+🧪 Conda Environment (environment.yml)
+yaml
+Copy
+Edit
+name: collision-detector
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - opencv
+  - matplotlib
+  - pip
+  - pip:
+      - ultralytics
+      - cython
+      - lap
+      - filterpy
+      - scikit-learn
+✅ Runtime Optimizations
+Strategy	Description
+Use YOLOv8n	Lightweight version for CPU inference
+Frame skipping	Run detection every 3–5 frames
+Resolution	Use 480x360 or lower input
+ByteTrack	Efficient tracker that runs on CPU
+Numpy vector ops	Avoids loops for real-time performance
+
+📊 Output (Live Display)
+Video stream window
+
+For each object:
+
+ID
+
+Bounding box
+
+Trajectory trail
+
+Display collision probability in corner
+
+Optionally log data per frame
+
