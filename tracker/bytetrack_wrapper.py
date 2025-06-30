@@ -34,7 +34,9 @@ class ByteTrackWrapper:
                 'class_id': int
             }, ...]
         """
-        dets = detections
+        dets = np.asarray(detections)
+        if dets.shape[1] == 6:
+            dets = dets[:, :5]  # Drop class_id column
 
         print("dets passed to BYTETracker:", dets) 
 
