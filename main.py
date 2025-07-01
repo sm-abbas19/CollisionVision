@@ -1,3 +1,5 @@
+import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 import cv2
 import numpy as np
 from collections import deque, defaultdict

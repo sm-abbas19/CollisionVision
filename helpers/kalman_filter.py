@@ -82,7 +82,12 @@ class KalmanFilter(object):
             10 * self._std_weight_velocity * measurement[3],
             1e-5,
             10 * self._std_weight_velocity * measurement[3]]
+        
+
         covariance = np.diag(np.square(std))
+
+        mean = mean.astype(np.float32)
+        covariance = covariance.astype(np.float32)
         return mean, covariance
 
     def predict(self, mean, covariance):
@@ -121,6 +126,8 @@ class KalmanFilter(object):
         covariance = np.linalg.multi_dot((
             self._motion_mat, covariance, self._motion_mat.T)) + motion_cov
 
+        mean = mean.astype(np.float32)
+        covariance = covariance.astype(np.float32)
         return mean, covariance
 
     def project(self, mean, covariance):
@@ -150,6 +157,10 @@ class KalmanFilter(object):
         mean = np.dot(self._update_mat, mean)
         covariance = np.linalg.multi_dot((
             self._update_mat, covariance, self._update_mat.T))
+        
+        mean = mean.astype(np.float32)
+        covariance = covariance.astype(np.float32)
+
         return mean, covariance + innovation_cov
 
     def multi_predict(self, mean, covariance):
@@ -189,6 +200,8 @@ class KalmanFilter(object):
         left = np.dot(self._motion_mat, covariance).transpose((1, 0, 2))
         covariance = np.dot(left, self._motion_mat.T) + motion_cov
 
+        mean = mean.astype(np.float32)
+        covariance = covariance.astype(np.float32)
         return mean, covariance
 
     def update(self, mean, covariance, measurement):
@@ -223,6 +236,10 @@ class KalmanFilter(object):
         new_mean = mean + np.dot(innovation, kalman_gain.T)
         new_covariance = covariance - np.linalg.multi_dot((
             kalman_gain, projected_cov, kalman_gain.T))
+        
+        new_mean = new_mean.astype(np.float32)
+        new_covariance = new_covariance.astype(np.float32)
+
         return new_mean, new_covariance
 
     def gating_distance(self, mean, covariance, measurements,
@@ -256,15 +273,17 @@ class KalmanFilter(object):
             mean, covariance = mean[:2], covariance[:2, :2]
             measurements = measurements[:, :2]
 
+        measurements = np.asarray(measurements, dtype=np.float32)
+
         d = measurements - mean
         if metric == 'gaussian':
-            return np.sum(d * d, axis=1)
+            return np.sum(d * d, axis=1).astype(np.float32)
         elif metric == 'maha':
             cholesky_factor = np.linalg.cholesky(covariance)
             z = scipy.linalg.solve_triangular(
                 cholesky_factor, d.T, lower=True, check_finite=False,
                 overwrite_b=True)
             squared_maha = np.sum(z * z, axis=0)
-            return squared_maha
+            return squared_maha.astype(np.float32)
         else:
             raise ValueError('invalid distance metric')

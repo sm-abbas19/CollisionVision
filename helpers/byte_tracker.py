@@ -32,8 +32,8 @@ class STrack(BaseTrack):
     @staticmethod
     def multi_predict(stracks):
         if len(stracks) > 0:
-            multi_mean = np.asarray([st.mean.copy() for st in stracks])
-            multi_covariance = np.asarray([st.covariance for st in stracks])
+            multi_mean = np.asarray([st.mean.copy() for st in stracks],dtype=np.float32)
+            multi_covariance = np.asarray([st.covariance for st in stracks],dtype=np.float32)
             for i, st in enumerate(stracks):
                 if st.state != TrackState.Tracked:
                     multi_mean[i][7] = 0
@@ -52,7 +52,7 @@ class STrack(BaseTrack):
         self.state = TrackState.Tracked
         if frame_id == 1:
             self.is_activated = True
-        # self.is_activated = True
+        self.is_activated = True
         self.frame_id = frame_id
         self.start_frame = frame_id
 
@@ -94,11 +94,11 @@ class STrack(BaseTrack):
                 width, height)`.
         """
         if self.mean is None:
-            return self._tlwh.copy()
+            return self._tlwh.copy().astype(np.float32)  
         ret = self.mean[:4].copy()
         ret[2] *= ret[3]
         ret[:2] -= ret[2:] / 2
-        return ret
+        return ret.astype(np.float32) 
 
     @property
     # @jit(nopython=True)
@@ -106,9 +106,9 @@ class STrack(BaseTrack):
         """Convert bounding box to format `(min x, min y, max x, max y)`, i.e.,
         `(top left, bottom right)`.
         """
-        ret = self.tlwh.copy()
+        ret = np.asarray(self.tlwh, dtype=np.float32).copy()
         ret[2:] += ret[:2]
-        return ret
+        return ret.astype(np.float32)
 
     @staticmethod
     # @jit(nopython=True)
@@ -116,10 +116,10 @@ class STrack(BaseTrack):
         """Convert bounding box to format `(center x, center y, aspect ratio,
         height)`, where the aspect ratio is `width / height`.
         """
-        ret = np.asarray(tlwh).copy()
+        ret = np.asarray(tlwh, dtype=np.float32).copy()
         ret[:2] += ret[2:] / 2
         ret[2] /= ret[3]
-        return ret
+        return ret.astype(np.float32)
 
     def to_xyah(self):
         return self.tlwh_to_xyah(self.tlwh)
@@ -127,16 +127,16 @@ class STrack(BaseTrack):
     @staticmethod
     # @jit(nopython=True)
     def tlbr_to_tlwh(tlbr):
-        ret = np.asarray(tlbr).copy()
+        ret = np.asarray(tlbr, dtype=np.float32).copy()
         ret[2:] -= ret[:2]
-        return ret
+        return ret.astype(np.float32)
 
     @staticmethod
     # @jit(nopython=True)
     def tlwh_to_tlbr(tlwh):
-        ret = np.asarray(tlwh).copy()
+        ret = np.asarray(tlwh,dtype=np.float32).copy()
         ret[2:] += ret[:2]
-        return ret
+        return ret.astype(np.float32)
 
     def __repr__(self):
         return 'OT_{}_({}-{})'.format(self.track_id, self.start_frame, self.end_frame)
@@ -150,14 +150,30 @@ class BYTETracker(object):
 
         self.frame_id = 0
         self.args = args
-        #self.det_thresh = args.track_thresh
-        self.det_thresh = args.track_thresh + 0.1
+        self.det_thresh = args.track_thresh
+        #self.det_thresh = args.track_thresh + 0.1
         self.buffer_size = int(frame_rate / 30.0 * args.track_buffer)
         self.max_time_lost = self.buffer_size
         self.kalman_filter = KalmanFilter()
 
     def update(self, output_results, img_info, img_size):
         self.frame_id += 1
+        if output_results.shape[0] == 0:
+            return []
+
+        # If this is the first frame or there are no existing tracks,
+        # initialize all detections as new tracks.
+        if self.frame_id == 1 or (len(self.tracked_stracks) == 0 and len(self.lost_stracks) == 0):
+            activated_stracks = []
+            for i in range(output_results.shape[0]):
+        # Use a reasonable threshold, e.g., 0.1, to avoid tracking noise
+                if output_results[i][4] < 0.1:
+                    continue
+                track = STrack(STrack.tlbr_to_tlwh(output_results[i, :4]), output_results[i, 4])
+                track.activate(self.kalman_filter, self.frame_id)
+                activated_stracks.append(track)
+            self.tracked_stracks = activated_stracks
+            return self.tracked_stracks
         activated_starcks = []
         refind_stracks = []
         lost_stracks = []
@@ -305,6 +321,7 @@ class BYTETracker(object):
         # print('Ramained match {} s'.format(t4-t3))
 
         self.tracked_stracks = [t for t in self.tracked_stracks if t.state == TrackState.Tracked]
+
         self.tracked_stracks = joint_stracks(self.tracked_stracks, activated_starcks)
         self.tracked_stracks = joint_stracks(self.tracked_stracks, refind_stracks)
         self.lost_stracks = sub_stracks(self.lost_stracks, self.tracked_stracks)
@@ -313,8 +330,10 @@ class BYTETracker(object):
         self.removed_stracks.extend(removed_stracks)
         self.tracked_stracks, self.lost_stracks = remove_duplicate_stracks(self.tracked_stracks, self.lost_stracks)
         # get scores of lost tracks
-        output_stracks = [track for track in self.tracked_stracks if track.is_activated]
-
+        #output_stracks = [track for track in self.tracked_stracks if track.is_activated]
+        output_stracks = [track for track in self.tracked_stracks if track.is_activated] + \
+                         [track for track in refind_stracks if track.is_activated]
+        print("BYTETracker output_stracks:", output_stracks)
         return output_stracks
 
 
