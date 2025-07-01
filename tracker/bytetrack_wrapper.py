@@ -34,6 +34,9 @@ class ByteTrackWrapper:
                 'class_id': int
             }, ...]
         """
+        if len(detections) == 0:
+            return []
+        
         dets = np.asarray(detections)
         if dets.shape[1] == 6:
             dets = dets[:, :5]  # Drop class_id column

@@ -48,16 +48,17 @@ def main():
                 (x1, y1, x2, y2, conf, int(class_id))
                 for (x1, y1, x2, y2, conf, class_id) in detections
             ]
+            detections = [det for det in detections if det[5] == 67]
             if detections:
                 detections = np.array(detections, dtype=np.float32)
                 detections[:, 5] = detections[:, 5].astype(np.int32)
             print("Detections to tracker:", detections)
-            print("Detections to tracker:", detections)
+            #print("Detections to tracker:", detections)
 
-        for det in detections:
-             x1, y1, x2, y2, conf, class_id = det
-             cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
-             cv2.putText(frame, f"{int(class_id)} {conf:.2f}", (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,255), 2)
+        #for det in detections:
+             #x1, y1, x2, y2, conf, class_id = det
+             #cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
+             #cv2.putText(frame, f"{int(class_id)} {conf:.2f}", (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,255), 2)
 
         # Tracking
         tracked = tracker.update(detections, [frame.shape[0], frame.shape[1]], [frame.shape[0], frame.shape[1]])
