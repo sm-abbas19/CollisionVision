@@ -31,19 +31,29 @@ def visualize_frame(frame, tracked_objects, trails, collision_pairs):
     """
     Args:
         frame: np.ndarray (BGR)
-        tracked_objects: list of dicts with keys 'track_id', 'bbox', 'pos_now'
+        tracked_objects: list of dicts with keys 'track_id', 'bbox', 'pos_now', 'class_id'
         trails: dict {track_id: deque of (x, y)}
         collision_pairs: list of (obj1, obj2, prob)
     """
     # Draw bounding boxes and IDs
     for obj in tracked_objects:
-        color = (0, 255, 0)
-        draw_bbox(frame, obj['bbox'], obj['track_id'], color)
+        print("DEBUG class_id:", obj.get('class_id', None), type(obj.get('class_id', None)))
+        # Assign color and label based on class_id
+        if (obj.get('class_id', None)) == 67:
+            color = (128, 0, 128)      # purple for phone
+            label = "Phone"
+        elif (obj.get('class_id', None)) == 39:
+            color = (255, 0, 255)    # Magenta for bottle
+            label = "Bottle"
+        else:
+            color = (200, 200, 200)  # Gray for others
+            label = str(obj.get('class_id', ''))
+        draw_bbox(frame, obj['bbox'], obj['track_id'], color, label)
         # Draw trail if available
         if obj['track_id'] in trails:
-            draw_trail(frame, trails[obj['track_id']], color=(255, 0, 0))
+            draw_trail(frame, trails[obj['track_id']], color=color)
     # Draw collision probabilities
     for obj1, obj2, prob in collision_pairs:
         if prob > 0:
-            draw_collision_prob(frame, obj1, obj2,prob)
+            draw_collision_prob(frame, obj1, obj2, prob)
     return frame

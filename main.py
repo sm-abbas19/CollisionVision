@@ -20,9 +20,16 @@ def main():
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+    # Get the actual camera FPS
+    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+    print(f"Camera reports FPS: {frame_rate}")
+
+    # If the value is 0 or very low, default to 30
+    if frame_rate < 1:
+        frame_rate = 30
 
     detector = YOLOv8Wrapper()
-    tracker = ByteTrackWrapper(track_thresh=0.001)
+    tracker = ByteTrackWrapper(track_thresh=0.7, match_thresh=0.9,track_buffer=1)
     trails = defaultdict(lambda: deque(maxlen=TRAIL_LENGTH))
     prev_positions = {}
 
@@ -48,7 +55,7 @@ def main():
                 (x1, y1, x2, y2, conf, int(class_id))
                 for (x1, y1, x2, y2, conf, class_id) in detections
             ]
-            detections = [det for det in detections if det[5] == 67]
+            detections = [det for det in detections if det[5] in [67, 39]]
             if detections:
                 detections = np.array(detections, dtype=np.float32)
                 detections[:, 5] = detections[:, 5].astype(np.int32)
@@ -67,6 +74,8 @@ def main():
         # Prepare tracked objects for visualization and collision logic
         tracked_objects = []
         for obj in tracked:
+            if obj['class_id'] not in [67, 39]:
+                continue
             bbox = obj['bbox']
             track_id = obj['track_id']
             center = get_center(bbox)
@@ -78,7 +87,8 @@ def main():
                 'track_id': track_id,
                 'bbox': bbox,
                 'pos_now': center,
-                'pos_prev': prev
+                'pos_prev': prev,
+                'class_id': obj['class_id'] 
             })
             prev_positions[track_id] = center
 

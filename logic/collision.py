@@ -13,7 +13,7 @@ def are_approaching(pos1_now, pos1_prev, pos2_now, pos2_prev):
     # Negative dot product means approaching
     return np.dot(rel_pos, rel_vel) < 0
 
-def collision_prob(dist, threshold=50, scale=10):
+def collision_prob(dist, threshold=150, scale=50):
     """Sigmoid-based collision probability based on distance."""
     return 1 / (1 + np.exp((dist - threshold) / scale))
 
