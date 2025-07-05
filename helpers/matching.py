@@ -31,6 +31,7 @@ def _indices_to_matches(cost_matrix, indices, thresh):
 
     matches = indices[matched_mask]
     unmatched_a = tuple(set(range(cost_matrix.shape[0])) - set(matches[:, 0]))
+    
     unmatched_b = tuple(set(range(cost_matrix.shape[1])) - set(matches[:, 1]))
 
     return matches, unmatched_a, unmatched_b

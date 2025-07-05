@@ -29,7 +29,7 @@ def main():
         frame_rate = 30
 
     detector = YOLOv8Wrapper()
-    tracker = ByteTrackWrapper(track_thresh=0.7, match_thresh=0.9,track_buffer=1)
+    tracker = ByteTrackWrapper(track_thresh=0.2, match_thresh=0.9,track_buffer=1)
     trails = defaultdict(lambda: deque(maxlen=TRAIL_LENGTH))
     prev_positions = {}
 
@@ -73,6 +73,7 @@ def main():
 
         # Prepare tracked objects for visualization and collision logic
         tracked_objects = []
+        current_ids = set()
         for obj in tracked:
             if obj['class_id'] not in [67, 39]:
                 continue
@@ -80,9 +81,17 @@ def main():
             track_id = obj['track_id']
             center = get_center(bbox)
             # Update trail
-            trails[track_id].append(center)
+            #trails[track_id].append(center)
             # Store previous position for velocity estimation
             prev = prev_positions.get(track_id, center)
+            # --- Large jump filter ---
+            jump_threshold = 100  # pixels, adjust as needed
+            if np.linalg.norm(np.array(center) - np.array(prev)) > jump_threshold:
+                trails[track_id].clear()
+                prev = center
+            # Update trail
+            trails[track_id].append(center)
+
             tracked_objects.append({
                 'track_id': track_id,
                 'bbox': bbox,
@@ -91,6 +100,13 @@ def main():
                 'class_id': obj['class_id'] 
             })
             prev_positions[track_id] = center
+            current_ids.add(track_id)
+        # --- Remove trails for tracks not present in this frame ---
+        for tid in list(trails.keys()):
+            if tid not in current_ids:
+                del trails[tid]
+                if tid in prev_positions:
+                    del prev_positions[tid]
 
         # Find two closest objects for collision estimation
         collision_pairs = []
@@ -111,7 +127,7 @@ def main():
                 collision_pairs.append((obj1, obj2, prob))
 
         # Visualize
-        out_frame = visualize_frame(frame, tracked_objects, trails, collision_pairs)
+        out_frame = visualize_frame(frame, tracked_objects, trails, collision_pairs, frame_idx)
         cv2.imshow("Collision Estimator", out_frame)
 
         key = cv2.waitKey(1)

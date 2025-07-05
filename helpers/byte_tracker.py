@@ -12,13 +12,14 @@ from .basetrack import BaseTrack, TrackState
 
 class STrack(BaseTrack):
     shared_kalman = KalmanFilter()
-    def __init__(self, tlwh, score):
+    def __init__(self, tlwh, score, class_id=-1):
 
         # wait activate
         self._tlwh = np.asarray(tlwh, dtype=np.float32)
         self.kalman_filter = None
         self.mean, self.covariance = None, None
         self.is_activated = False
+        self.class_id = class_id
 
         self.score = score
         self.tracklet_len = 0
@@ -56,7 +57,7 @@ class STrack(BaseTrack):
         self.frame_id = frame_id
         self.start_frame = frame_id
 
-    def re_activate(self, new_track, frame_id, new_id=False):
+    def re_activate(self, new_track, frame_id, new_id=True):
         self.mean, self.covariance = self.kalman_filter.update(
             self.mean, self.covariance, self.tlwh_to_xyah(new_track.tlwh)
         )
@@ -64,6 +65,7 @@ class STrack(BaseTrack):
         self.state = TrackState.Tracked
         self.is_activated = True
         self.frame_id = frame_id
+        self.class_id = new_track.class_id
         if new_id:
             self.track_id = self.next_id()
         self.score = new_track.score
@@ -86,6 +88,7 @@ class STrack(BaseTrack):
         self.is_activated = True
 
         self.score = new_track.score
+        self.class_id = new_track.class_id
 
     @property
     # @jit(nopython=True)
@@ -169,7 +172,8 @@ class BYTETracker(object):
         # Use a reasonable threshold, e.g., 0.1, to avoid tracking noise
                 if output_results[i][4] < 0.1:
                     continue
-                track = STrack(STrack.tlbr_to_tlwh(output_results[i, :4]), output_results[i, 4])
+                det = output_results[i]
+                track = STrack(STrack.tlbr_to_tlwh(det[:4]), det[4], int(det[5]) if len(det) > 5 else -1)
                 track.activate(self.kalman_filter, self.frame_id)
                 activated_stracks.append(track)
             self.tracked_stracks = activated_stracks
@@ -203,13 +207,19 @@ class BYTETracker(object):
 
         if len(dets) > 0:
             '''Detections'''
-            detections = [STrack(STrack.tlbr_to_tlwh(tlbr), s) for
-                          (tlbr, s) in zip(dets, scores_keep)]
+            detections = [STrack(STrack.tlbr_to_tlwh(tlbr), s, int(c))
+              for tlbr, s, c in zip(dets, scores_keep, output_results[remain_inds, 5] if output_results.shape[1] > 5 else [-1]*len(dets))]
         else:
             detections = []
 
         if isinstance(detections, np.ndarray):
-            detections = [STrack(STrack.tlbr_to_tlwh(det[:4]), det[4]) for det in detections]
+            detections = [
+                STrack(
+                    STrack.tlbr_to_tlwh(det[:4]), 
+                    det[4], 
+                    int(det[5]) if len(det) > 5 else -1
+                ) for det in detections
+            ]
         ''' Add newly detected tracklets to tracked_stracks'''
         unconfirmed = []
         tracked_stracks = []  # type: list[STrack]
@@ -235,24 +245,32 @@ class BYTETracker(object):
                 track.update(detections[idet], self.frame_id)
                 activated_starcks.append(track)
             else:
-                track.re_activate(det, self.frame_id, new_id=False)
+                track.re_activate(det, self.frame_id, new_id=True)
                 refind_stracks.append(track)
 
         if len(detections) > 0 and not isinstance(detections[0], STrack):
             detections = [
                 STrack(
                     STrack.tlbr_to_tlwh(np.asarray(det[:4], dtype=np.float32)),
-                    float(det[4])
-                )
-                for det in detections
+                    float(det[4]),
+                    int(det[5]) if len(det) > 5 else -1
+                ) for det in detections
             ]
+        for it in u_track:
+            track = strack_pool[it]
+            #if not track.state == TrackState.Lost:
+                #track.mark_lost()
+                #lost_stracks.append(track)
+            track.mark_removed()
+            removed_stracks.append(track)
 
         ''' Step 3: Second association, with low score detection boxes'''
         # association the untrack to the low score detections
         if len(dets_second) > 0:
             '''Detections'''
-            detections_second = [STrack(STrack.tlbr_to_tlwh(tlbr), s) for
-                          (tlbr, s) in zip(dets_second, scores_second)]
+            detections_second = [STrack(STrack.tlbr_to_tlwh(tlbr), s, int(c))
+                    for (tlbr, s, c) in zip(dets_second, scores_second, output_results[inds_second, 5] if output_results.shape[1] > 5 else [-1]*len(dets_second))]
+
         else:
             detections_second = []
         
@@ -274,14 +292,16 @@ class BYTETracker(object):
                 track.update(det, self.frame_id)
                 activated_starcks.append(track)
             else:
-                track.re_activate(det, self.frame_id, new_id=False)
+                track.re_activate(det, self.frame_id, new_id=True)
                 refind_stracks.append(track)
 
         for it in u_track:
             track = r_tracked_stracks[it]
-            if not track.state == TrackState.Lost:
-                track.mark_lost()
-                lost_stracks.append(track)
+            #if not track.state == TrackState.Lost:
+                #track.mark_lost()
+                #lost_stracks.append(track)
+            track.mark_removed()
+            removed_stracks.append(track)
 
         '''Deal with unconfirmed tracks, usually tracks with only one beginning frame'''
         detections = [detections[i] for i in u_detection]
@@ -310,6 +330,7 @@ class BYTETracker(object):
             track = detections[inew]
             if track.score < 0.1:
                 continue
+            track = STrack(track.tlwh, track.score, track.class_id)
             track.activate(self.kalman_filter, self.frame_id)
             activated_starcks.append(track)
         """ Step 5: Update state"""
@@ -331,8 +352,10 @@ class BYTETracker(object):
         self.tracked_stracks, self.lost_stracks = remove_duplicate_stracks(self.tracked_stracks, self.lost_stracks)
         # get scores of lost tracks
         #output_stracks = [track for track in self.tracked_stracks if track.is_activated]
-        output_stracks = [track for track in self.tracked_stracks if track.is_activated] + \
-                         [track for track in refind_stracks if track.is_activated]
+        #output_stracks = [track for track in self.tracked_stracks if track.is_activated] + \
+                         #[track for track in refind_stracks if track.is_activated]
+        output_stracks = [track for track in self.tracked_stracks if track.is_activated and track.state == TrackState.Tracked] + \
+                 [track for track in refind_stracks if track.is_activated and track.state == TrackState.Tracked]
         print("BYTETracker output_stracks:", output_stracks)
         return output_stracks
 
