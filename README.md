@@ -22,25 +22,33 @@ A real-time computer vision system for detecting, tracking, and estimating poten
 
 ### 1. Clone the repository
 
-bash
+```bash
 
 git clone https://github.com/yourusername/Collision_Estimator.git
 cd Collision_Estimator
 
+```
+
 2. Set up the environment
+
+   
 Using Conda (recommended):
-bashCopyEditconda env create -f environment.yml
+```bash
+conda env create -f environment.yml
 conda activate collision-detector
+```
 
 Or install dependencies manually:
-bashCopyEditpip install numpy opencv-python matplotlib ultralytics cython lap filterpy scikit-learn
 
+```bash
+pip install numpy opencv-python matplotlib ultralytics cython lap filterpy scikit-learn
+```
 
 ## 🚀 Usage
 Run the application:
-bashCopyEditpython main.py
-
-
+```bash
+python main.py
+```
 Press ESC to exit the application.
 
 
@@ -61,12 +69,22 @@ Visualization: The video stream shows bounding boxes, object IDs, motion trails,
 
 
 ##🛠️ Configuration
-You can tweak the following settings in main.py:
-ParameterDescriptionDefaultFRAME_SKIPRun detection every N frames1TRAIL_LENGTHNumber of points in the motion trail20track_threshMinimum detection confidence for tracking0.3match_threshIoU threshold to match detections to tracks0.8track_bufferHow long to retain lost tracks (in frames)5
-In logic/collision.py, you can adjust collision sensitivity:
-ParameterDescriptionthresholdDistance at which probability = 0.5 (lower = more sensitive)scaleControls how quickly probability increases
+Configuration
+You can adjust key parameters in main.py:
+
+FRAME_SKIP: Run detection every N frames (default: 1)
+TRAIL_LENGTH: Number of points in the motion trail (default: 20)
+track_thresh: Minimum confidence for tracking (default: 0.3)
+match_thresh: IoU threshold for matching detections to tracks (default: 0.8)
+track_buffer: Frames to keep lost tracks (default: 5)
+Objects filtered for detection 
+In logic/collision.py, you can tune collision sensitivity:
+
+threshold: Distance at which collision probability is 0.5 (lower = more sensitive)
+scale: Controls how quickly probability rises as distance decreases
 
 ##🗂️ Project Structure
+
 cssCopyEditCollision_Estimator/
 ├── detector/
 │   └── yolov8_wrapper.py
