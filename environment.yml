@@ -1,4 +1,4 @@
-name: collision-detector
+name: CollisionVision
 channels:
   - conda-forge
   - defaults
@@ -9,9 +9,17 @@ dependencies:
   - matplotlib
   - pip
   - pip:
-      - ultralytics
+      - ultralytics>=8.0.0
       - cython
       - lap
       - filterpy
       - scikit-learn
-      
+      - torch>=1.7.0
+      - torchvision>=0.8.1
+      - onemetric
+      - loguru
+      - scipy
+      - tqdm
+      - tensorboard
+      - thop  # FLOPs calculation
+      - yolox  # For ByteTrack integration
