@@ -1,6 +1,6 @@
 # 🚨 Collision Estimator
 
-A real-time computer vision system for detecting, tracking, and estimating potential collisions between objects (phones and bottles) using **YOLOv8** and **ByteTrack**.
+A real-time computer vision system for detecting, tracking, and estimating potential collisions between objects (phones and bottles (can be adjusted)) using **YOLOv8** and **ByteTrack**.
 
 ---
 
@@ -72,7 +72,7 @@ You can adjust key parameters in main.py:
 - track_buffer: Frames to keep lost tracks (default: 5)
 - Objects filtered for detection
 
-- In logic/collision.py, you can tune collision sensitivity:
+In logic/collision.py, you can tune collision sensitivity:
 
 - threshold: Distance at which collision probability is 0.5 (lower = more sensitive)
 - scale: Controls how quickly probability rises as distance decreases
