@@ -7,7 +7,7 @@ except ImportError:
     raise ImportError("Please install ByteTrack and its dependencies.")
 
 class ByteTrackWrapper:
-    def __init__(self, track_thresh=0.3, match_thresh=0.8, track_buffer=30, frame_rate=30):
+    def __init__(self, track_thresh=0.3, match_thresh=0.3, track_buffer=1, frame_rate=5):
         # Create an args namespace as expected by BYTETracker
         args = SimpleNamespace(
             track_thresh=track_thresh,

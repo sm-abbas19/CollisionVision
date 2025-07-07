@@ -146,7 +146,7 @@ class STrack(BaseTrack):
 
 
 class BYTETracker(object):
-    def __init__(self, args, frame_rate=30):
+    def __init__(self, args, frame_rate=5):
         self.tracked_stracks = []  # type: list[STrack]
         self.lost_stracks = []  # type: list[STrack]
         self.removed_stracks = []  # type: list[STrack]
@@ -189,7 +189,7 @@ class BYTETracker(object):
         else:
             if hasattr(output_results, "cpu"):
                 output_results = output_results.cpu().numpy()
-            scores = output_results[:, 4] * output_results[:, 5]
+            scores = output_results[:, 4]
             bboxes = output_results[:, :4]  # x1y1x2y2
         img_h, img_w = img_info[0], img_info[1]
         scale = min(img_size[0] / float(img_h), img_size[1] / float(img_w))
@@ -238,6 +238,11 @@ class BYTETracker(object):
             dists = matching.fuse_score(dists, detections)
         matches, u_track, u_detection = matching.linear_assignment(dists, thresh=self.args.match_thresh)
 
+        print("DEBUG: matches:", matches)
+        print("DEBUG: u_track (unmatched tracks):", u_track)
+        print("DEBUG: u_detection (unmatched detections):", u_detection)
+        print("DEBUG: detections:", detections)
+
         for itracked, idet in matches:
             track = strack_pool[itracked]
             det = detections[idet]
@@ -258,11 +263,11 @@ class BYTETracker(object):
             ]
         for it in u_track:
             track = strack_pool[it]
-            #if not track.state == TrackState.Lost:
-                #track.mark_lost()
-                #lost_stracks.append(track)
-            track.mark_removed()
-            removed_stracks.append(track)
+            if not track.state == TrackState.Lost:
+                track.mark_lost()
+                lost_stracks.append(track)
+            #track.mark_removed()
+            #removed_stracks.append(track)
 
         ''' Step 3: Second association, with low score detection boxes'''
         # association the untrack to the low score detections
@@ -278,7 +283,8 @@ class BYTETracker(object):
             detections_second = [
                 STrack(
                     STrack.tlbr_to_tlwh(np.asarray(det[:4], dtype=np.float32)),
-                    float(det[4])
+                    float(det[4]),
+                    int(det[5]) if len(det) > 5 else -1
                 )
                 for det in detections_second
             ]
@@ -309,7 +315,8 @@ class BYTETracker(object):
             detections = [
                 STrack(
                     STrack.tlbr_to_tlwh(np.asarray(det[:4], dtype=np.float32)),
-                    float(det[4])
+                    float(det[4]),
+                    int(det[5]) if len(det) > 5 else -1
                 )
                 for det in detections
             ]
@@ -327,6 +334,7 @@ class BYTETracker(object):
 
         """ Step 4: Init new stracks"""
         for inew in u_detection:
+            print("DEBUG: Initializing new track for detection:", detections[inew])
             track = detections[inew]
             if track.score < 0.1:
                 continue
@@ -387,7 +395,7 @@ def sub_stracks(tlista, tlistb):
 
 def remove_duplicate_stracks(stracksa, stracksb):
     pdist = matching.iou_distance(stracksa, stracksb)
-    pairs = np.where(pdist < 0.01)
+    pairs = np.where(pdist < 0.9)
     dupa, dupb = list(), list()
     for p, q in zip(*pairs):
         timep = stracksa[p].frame_id - stracksa[p].start_frame

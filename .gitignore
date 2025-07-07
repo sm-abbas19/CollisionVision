@@ -1,0 +1,17 @@
+# Ignore all __pycache__ folders recursively
+__pycache__/
+
+# Ignore all Python bytecode files anywhere
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+env/
+.venv/
+
+# Log files
+*.log
+
+# Specific files you want to ignore
+outline.txt

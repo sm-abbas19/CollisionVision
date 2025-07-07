@@ -7,6 +7,7 @@ from detector.yolov8_wrapper import YOLOv8Wrapper
 from tracker.bytetrack_wrapper import ByteTrackWrapper
 from logic.collision import estimate_collision
 from utils.visualizer import visualize_frame
+import time
 
 # --- Parameters ---
 FRAME_SKIP = 1  # Run detection every N frames
@@ -17,11 +18,13 @@ def get_center(bbox):
     return ((x1 + x2) / 2, (y1 + y2) / 2)
 
 def main():
+    prev_time = time.time()
+    fps = 0
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
     # Get the actual camera FPS
-    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+    frame_rate = 5
     print(f"Camera reports FPS: {frame_rate}")
 
     # If the value is 0 or very low, default to 30
@@ -29,7 +32,7 @@ def main():
         frame_rate = 30
 
     detector = YOLOv8Wrapper()
-    tracker = ByteTrackWrapper(track_thresh=0.2, match_thresh=0.9,track_buffer=1)
+    tracker = ByteTrackWrapper(track_thresh=0.3, match_thresh=0.8,track_buffer=5)
     trails = defaultdict(lambda: deque(maxlen=TRAIL_LENGTH))
     prev_positions = {}
 
@@ -124,10 +127,15 @@ def main():
             if pairs:
                 _, obj1, obj2 = pairs[0]
                 prob, approaching, distance = estimate_collision(obj1, obj2)
+                                                            
                 collision_pairs.append((obj1, obj2, prob))
 
         # Visualize
         out_frame = visualize_frame(frame, tracked_objects, trails, collision_pairs, frame_idx)
+        curr_time = time.time()
+        fps = 1.0 / (curr_time - prev_time)
+        prev_time = curr_time
+        cv2.putText(out_frame, f"FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.imshow("Collision Estimator", out_frame)
 
         key = cv2.waitKey(1)
