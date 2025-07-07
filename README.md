@@ -1,6 +1,6 @@
-# 🚨 Collision Estimator
+# 🚨 CollisionVision
 
-A real-time computer vision system for detecting, tracking, and estimating potential collisions between objects (phones and bottles (can be adjusted)) using **YOLOv8** and **ByteTrack**.
+A real-time computer vision system for detecting, tracking, and estimating potential collisions between objects — such as phones and bottles (configurable) — using YOLOv8 and ByteTrack.
 
 ---
 
@@ -38,11 +38,9 @@ conda env create -f environment.yml
 conda activate collision-detector
 ```
 
-Or install dependencies manually:
+### Additional Requirements
 
-```bash
-pip install numpy opencv-python matplotlib ultralytics cython lap filterpy scikit-learn
-```
+- Windows users: Install [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
 ## 🚀 Usage
 Run the application:
@@ -76,6 +74,8 @@ In logic/collision.py, you can tune collision sensitivity:
 
 - threshold: Distance at which collision probability is 0.5 (lower = more sensitive)
 - scale: Controls how quickly probability rises as distance decreases
+
+In the helpers/ directory, you’ll find modified ByteTrack files. Replace the default ByteTrack files in your environment with these to ensure proper functionality.
 
 ## 🗂️ Project Structure
 ```
