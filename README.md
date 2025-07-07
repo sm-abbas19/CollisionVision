@@ -14,9 +14,7 @@ A real-time computer vision system for detecting, tracking, and estimating poten
 
 ---
 
-## 🎥 Demo
 
-![Demo Screenshot](demo_screenshot.png)
 
 ---
 
@@ -24,7 +22,8 @@ A real-time computer vision system for detecting, tracking, and estimating poten
 
 ### 1. Clone the repository
 
-```bash
+bash
+
 git clone https://github.com/yourusername/Collision_Estimator.git
 cd Collision_Estimator
 
@@ -37,7 +36,7 @@ Or install dependencies manually:
 bashCopyEditpip install numpy opencv-python matplotlib ultralytics cython lap filterpy scikit-learn
 
 
-🚀 Usage
+## 🚀 Usage
 Run the application:
 bashCopyEditpython main.py
 
@@ -45,7 +44,7 @@ bashCopyEditpython main.py
 Press ESC to exit the application.
 
 
-⚙️ How It Works
+##⚙️ How It Works
 
 
 Detection: YOLOv8 detects phones (class 67) and bottles (class 39) in each frame.
@@ -61,13 +60,13 @@ Visualization: The video stream shows bounding boxes, object IDs, motion trails,
 
 
 
-🛠️ Configuration
+##🛠️ Configuration
 You can tweak the following settings in main.py:
 ParameterDescriptionDefaultFRAME_SKIPRun detection every N frames1TRAIL_LENGTHNumber of points in the motion trail20track_threshMinimum detection confidence for tracking0.3match_threshIoU threshold to match detections to tracks0.8track_bufferHow long to retain lost tracks (in frames)5
 In logic/collision.py, you can adjust collision sensitivity:
 ParameterDescriptionthresholdDistance at which probability = 0.5 (lower = more sensitive)scaleControls how quickly probability increases
 
-🗂️ Project Structure
+##🗂️ Project Structure
 cssCopyEditCollision_Estimator/
 ├── detector/
 │   └── yolov8_wrapper.py
@@ -82,7 +81,7 @@ cssCopyEditCollision_Estimator/
 └── README.md
 
 
-⚠️ Limitations
+##⚠️ Limitations
 
 
 Collision estimation is 2D (image plane only)
