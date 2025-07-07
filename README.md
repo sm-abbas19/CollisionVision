@@ -24,8 +24,8 @@ A real-time computer vision system for detecting, tracking, and estimating poten
 
 ```bash
 
-git clone https://github.com/yourusername/Collision_Estimator.git
-cd Collision_Estimator
+git clone https://github.com/sm-abbas19/CollisionVision.git
+cd CollisionVision
 
 ```
 
@@ -35,7 +35,7 @@ cd Collision_Estimator
 Using Conda (recommended):
 ```bash
 conda env create -f environment.yml
-conda activate collision-detector
+conda activate CollisionVision
 ```
 
 ### Additional Requirements
