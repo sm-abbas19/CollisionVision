@@ -32,7 +32,7 @@ def main():
         frame_rate = 30
 
     detector = YOLOv8Wrapper()
-    tracker = ByteTrackWrapper(track_thresh=0.3, match_thresh=0.8,track_buffer=5)
+    tracker = ByteTrackWrapper(track_thresh=0.1, match_thresh=0.6,track_buffer=30)
     trails = defaultdict(lambda: deque(maxlen=TRAIL_LENGTH))
     prev_positions = {}
 

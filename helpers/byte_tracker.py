@@ -333,8 +333,13 @@ class BYTETracker(object):
             removed_stracks.append(track)
 
         """ Step 4: Init new stracks"""
-        for inew in u_detection:
-            print("DEBUG: Initializing new track for detection:", detections[inew])
+        # Step 4: Force new tracks for all detections not matched to a track
+        all_det_indices = set(range(len(detections)))
+        matched_det_indices = set([idet for _, idet in matches])
+        unmatched_det_indices = all_det_indices - matched_det_indices
+
+        for inew in unmatched_det_indices:
+            print("DEBUG: Forcing initialization of new track for detection:", detections[inew])
             track = detections[inew]
             if track.score < 0.1:
                 continue
