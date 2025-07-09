@@ -63,12 +63,18 @@ Press ESC to exit the application.
 
 You can adjust key parameters in main.py:
 
-- FRAME_SKIP: Run detection every N frames (default: 1)
-- TRAIL_LENGTH: Number of points in the motion trail (default: 20)
-- track_thresh: Minimum confidence for tracking (default: 0.3)
-- match_thresh: IoU threshold for matching detections to tracks (default: 0.8)
-- track_buffer: Frames to keep lost tracks (default: 5)
+- FRAME_SKIP: Run detection every N frames 
+- TRAIL_LENGTH: Number of points in the motion trail 
+- track_thresh: Minimum confidence for tracking 
+- match_thresh: IoU threshold for matching detections to tracks 
+- track_buffer: Frames to keep lost tracks 
+- frame_rate: Frames per second from your camera
 - Objects filtered for detection
+  
+In tracker/kalmanfilter.py:
+- std_weight_position: Standard deviation weight for position (affects Kalman filter smoothness)
+- std_weight_velocity: Standard deviation weight for velocity
+
 
 In logic/collision.py, you can tune collision sensitivity:
 
@@ -96,5 +102,7 @@ Collision_Estimator/
 
 ## ⚠️ Limitations
 
+
 - Collision estimation is 2D (image plane only)
 - Performance depends on video quality and lighting conditions
+- This is a learning project — my first time working with computer vision. Many components and parameters (e.g., Kalman filter, collision thresholds) likely require further tuning for real-world reliability and robustness.
