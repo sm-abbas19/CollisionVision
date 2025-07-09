@@ -21,8 +21,8 @@ def main():
     prev_time = time.time()
     fps = 0
     cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 320)
     # Get the actual camera FPS
     frame_rate = 5
     print(f"Camera reports FPS: {frame_rate}")
@@ -32,7 +32,7 @@ def main():
         frame_rate = 30
 
     detector = YOLOv8Wrapper()
-    tracker = ByteTrackWrapper(track_thresh=0.1, match_thresh=0.6,track_buffer=30)
+    tracker = ByteTrackWrapper(track_thresh=0.05, match_thresh=0.5,track_buffer=30)
     trails = defaultdict(lambda: deque(maxlen=TRAIL_LENGTH))
     prev_positions = {}
 

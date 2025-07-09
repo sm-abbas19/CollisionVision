@@ -333,19 +333,36 @@ class BYTETracker(object):
             removed_stracks.append(track)
 
         """ Step 4: Init new stracks"""
-        # Step 4: Force new tracks for all detections not matched to a track
+        # Step 4: Hybrid association for unmatched detections
         all_det_indices = set(range(len(detections)))
         matched_det_indices = set([idet for _, idet in matches])
         unmatched_det_indices = all_det_indices - matched_det_indices
 
         for inew in unmatched_det_indices:
-            print("DEBUG: Forcing initialization of new track for detection:", detections[inew])
             track = detections[inew]
             if track.score < 0.1:
                 continue
-            track = STrack(track.tlwh, track.score, track.class_id)
-            track.activate(self.kalman_filter, self.frame_id)
-            activated_starcks.append(track)
+
+            # Try to associate with a lost/existing track by distance
+            closest_track = None
+            min_distance = float('inf')
+            for existing_track in self.tracked_stracks + self.lost_stracks:
+                existing_center = np.array(existing_track.tlwh[:2]) + np.array(existing_track.tlwh[2:]) / 2
+                new_center = np.array(track.tlwh[:2]) + np.array(track.tlwh[2:]) / 2
+                distance = np.linalg.norm(existing_center - new_center)
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_track = existing_track
+
+            if closest_track is not None and min_distance < 75:
+                print(f"DEBUG: Forcing update of track {closest_track.track_id} with detection (min_dist={min_distance:.1f})")
+                closest_track.update(track, self.frame_id)
+                activated_starcks.append(closest_track)
+            else:
+                print(f"DEBUG: Creating new track for distant detection (min_dist={min_distance:.1f}):", track)
+                new_track = STrack(track.tlwh, track.score, track.class_id)
+                new_track.activate(self.kalman_filter, self.frame_id)
+                activated_starcks.append(new_track)
         """ Step 5: Update state"""
         for track in self.lost_stracks:
             if self.frame_id - track.end_frame > self.max_time_lost:
