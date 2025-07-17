@@ -2,7 +2,7 @@ import numpy as np
 from types import SimpleNamespace
 
 try:
-    from helpers.byte_tracker import BYTETracker
+    from CollisionVision.helpers.byte_tracker import BYTETracker
 except ImportError:
     raise ImportError("Please install ByteTrack and its dependencies.")
 

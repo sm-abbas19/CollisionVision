@@ -3,10 +3,10 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 import cv2
 import numpy as np
 from collections import deque, defaultdict
-from detector.yolov8_wrapper import YOLOv8Wrapper
-from tracker.bytetrack_wrapper import ByteTrackWrapper
-from logic.collision import estimate_collision
-from utils.visualizer import visualize_frame
+from CollisionVision.detector.yolov8_wrapper import YOLOv8Wrapper
+from CollisionVision.tracker.bytetrack_wrapper import ByteTrackWrapper
+from CollisionVision.logic.collision import estimate_collision
+from CollisionVision.utils.visualizer import visualize_frame
 import time
 
 # --- Parameters ---

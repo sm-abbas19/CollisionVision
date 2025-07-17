@@ -19,6 +19,23 @@ def get_center(bbox):
     x1, y1, x2, y2 = bbox
     return ((x1 + x2) / 2, (y1 + y2) / 2)
 
+def to_py(obj):
+    import numpy as np
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, (np.float32, np.float64)):
+        return float(obj)
+    elif isinstance(obj, (np.int32, np.int64)):
+        return int(obj)
+    elif isinstance(obj, dict):
+        return {k: to_py(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [to_py(x) for x in obj]
+    elif isinstance(obj, (np.bool_, bool)):  # <-- Add this line
+        return bool(obj)
+    else:
+        return obj
+
 def process_image(frame):
     """
     Accepts a numpy image, returns detection, tracking, and collision estimation results.
@@ -89,7 +106,7 @@ def process_image(frame):
                 "distance": distance
             })
 
-    return {
+    result = {
         "tracked_objects": [
             {
                 "track_id": obj['track_id'],
@@ -102,3 +119,4 @@ def process_image(frame):
         ],
         "collision_pairs": collision_pairs
     }
+    return to_py(result)

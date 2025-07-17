@@ -6,9 +6,9 @@ import copy
 import torch
 import torch.nn.functional as F
 
-from .kalman_filter import KalmanFilter
-from helpers import matching
-from .basetrack import BaseTrack, TrackState
+from CollisionVision.helpers.kalman_filter import KalmanFilter
+from CollisionVision.helpers import matching
+from CollisionVision.helpers.basetrack import BaseTrack, TrackState
 
 class STrack(BaseTrack):
     shared_kalman = KalmanFilter()
