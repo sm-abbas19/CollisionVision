@@ -24,7 +24,7 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 320)
     # Get the actual camera FPS
-    frame_rate = 5
+    frame_rate = 16
     print(f"Camera reports FPS: {frame_rate}")
 
     # If the value is 0 or very low, default to 30

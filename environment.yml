@@ -22,4 +22,4 @@ dependencies:
       - tqdm
       - tensorboard
       - thop  # FLOPs calculation
-      - yolox  # For ByteTrack integration
+      #- yolox  # For ByteTrack integration

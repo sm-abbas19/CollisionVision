@@ -2,7 +2,7 @@ import numpy as np
 from types import SimpleNamespace
 
 try:
-    from yolox.tracker.byte_tracker import BYTETracker
+    from helpers.byte_tracker import BYTETracker
 except ImportError:
     raise ImportError("Please install ByteTrack and its dependencies.")
 
