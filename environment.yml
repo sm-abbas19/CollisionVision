@@ -7,13 +7,32 @@ dependencies:
   - numpy
   - opencv
   - matplotlib
+  - click
+  - flask
+  - jinja2
+  - networkx
+  - pandas
+  - pillow
+  - protobuf
+  - pyparsing
+  - pytz
+  - pyyaml
+  - requests
+  - scikit-learn
+  - seaborn
+  - six
+  - sympy
+  - tornado
+  - werkzeug
+  - wheel
+  - psycopg2           # PostgreSQL adapter for Python
+  - sqlalchemy         # ORM for database operations
   - pip
   - pip:
       - ultralytics>=8.0.0
       - cython
       - lap
       - filterpy
-      - scikit-learn
       - torch>=1.7.0
       - torchvision>=0.8.1
       - onemetric
@@ -22,4 +41,4 @@ dependencies:
       - tqdm
       - tensorboard
       - thop  # FLOPs calculation
-      #- yolox  # For ByteTrack integration
+      # - yolox  # For ByteTrack integration

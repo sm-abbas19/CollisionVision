@@ -91,7 +91,15 @@ async def process_frame(file: UploadFile = File(...)):
         pairs.sort(key=lambda x: x[0])
         if pairs:
             _, obj1, obj2 = pairs[0]
-            prob, approaching, distance = estimate_collision(obj1, obj2)
+            obj1_for_collision = {
+                'pos_now': obj1['center'],
+                'pos_prev': [obj1['center'][0] - obj1['velocity'][0], obj1['center'][1] - obj1['velocity'][1]]
+            }
+            obj2_for_collision = {
+                'pos_now': obj2['center'],
+                'pos_prev': [obj2['center'][0] - obj2['velocity'][0], obj2['center'][1] - obj2['velocity'][1]]
+    }
+            prob, approaching, distance = estimate_collision(obj1_for_collision, obj2_for_collision)
             collision_pairs.append({
                 'track_id_1': obj1['track_id'],
                 'track_id_2': obj2['track_id'],

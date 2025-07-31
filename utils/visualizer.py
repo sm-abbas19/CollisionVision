@@ -35,7 +35,7 @@ def visualize_frame(frame, tracked_objects, trails, collision_pairs,frame_count)
         trails: dict {track_id: deque of (x, y)}
         collision_pairs: list of (obj1, obj2, prob)
     """
-    if frame_count % 50 == 0:
+    if frame_count % 1000 == 0:
             print("DEBUG class_ids:", [obj.get('class_id', None) for obj in tracked_objects])
     # Draw bounding boxes and IDs
     for obj in tracked_objects:

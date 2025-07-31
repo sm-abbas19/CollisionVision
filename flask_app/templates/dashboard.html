@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Collision Monitoring Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+
+  <header class="bg-white shadow p-6 text-center">
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+      🚧 Collision Monitoring Dashboard
+    </h1>
+  </header>
+
+  <!-- Navigation: Only one! Use <button> not <a> for switching views -->
+  <nav class="flex justify-center gap-4 my-6">
+    <button id="btn-events" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded-lg transition">
+      Collision Events
+    </button>
+    <button id="btn-metrics" class="bg-green-700 hover:bg-green-800 text-white px-5 py-2 rounded-lg transition">
+      System Metrics
+    </button>
+  </nav>
+
+  <main id="dashboard" class="w-[95%] md:w-4/5 mx-auto overflow-x-auto"></main>
+
+  <script>
+  let currentTable = "events";
+
+  function renderEvents(events) {
+    let html = `
+      <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
+      <table class="min-w-full text-sm text-left text-gray-700">
+        <thead class="bg-gray-200 text-gray-700 uppercase text-xs">
+          <tr>
+            <th class="px-6 py-3">Time</th>
+            <th class="px-6 py-3">Type</th>
+            <th class="px-6 py-3">Severity</th>
+            <th class="px-6 py-3">Prob</th>
+            <th class="px-6 py-3">Dist</th>
+            <th class="px-6 py-3">Objects</th>
+          </tr>
+        </thead>
+        <tbody>`;
+    for (let ev of events) {
+      let bgClass = '';
+      // Use clearly different color styles (Tailwind color classes)
+      if (ev.event_type === "collision") bgClass = "bg-red-100 text-red-800";
+      else if (ev.event_type === "near_miss") bgClass = "bg-yellow-100 text-yellow-900";
+      else if (ev.event_type === "warning") bgClass = "bg-blue-100 text-blue-800";
+      html += `
+        <tr class="${bgClass} hover:bg-opacity-75 transition">
+          <td class="px-6 py-4">${ev.timestamp || ''}</td>
+          <td class="px-6 py-4">${ev.event_type}</td>
+          <td class="px-6 py-4">${ev.severity || ''}</td>
+          <td class="px-6 py-4">${ev.probability !== undefined ? ev.probability.toFixed(2) : ''}</td>
+          <td class="px-6 py-4">${ev.distance !== undefined ? ev.distance.toFixed(2) : ''}</td>
+          <td class="px-6 py-4">${ev.object1_class} & ${ev.object2_class}</td>
+        </tr>`;
+    }
+    html += `</tbody></table></div>`;
+    document.getElementById('dashboard').innerHTML = html;
+  }
+
+  function renderMetrics(metrics) {
+    let html = `
+      <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
+      <table class="min-w-full text-sm text-left text-gray-700">
+        <thead class="bg-gray-200 text-gray-700 uppercase text-xs">
+          <tr>
+            <th class="px-6 py-3">Time</th>
+            <th class="px-6 py-3">FPS</th>
+            <th class="px-6 py-3">Total Objects</th>
+            <th class="px-6 py-3">Active Tracks</th>
+            <th class="px-6 py-3">CPU (%)</th>
+            <th class="px-6 py-3">MEM (%)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+    for (let m of metrics) {
+      html += `
+        <tr class="hover:bg-gray-100 transition">
+          <td class="px-6 py-4">${m.timestamp || ''}</td>
+          <td class="px-6 py-4">${m.fps}</td>
+          <td class="px-6 py-4">${m.total_objects_detected}</td>
+          <td class="px-6 py-4">${m.active_tracks}</td>
+          <td class="px-6 py-4">${m.cpu_usage}</td>
+          <td class="px-6 py-4">${m.memory_usage}</td>
+        </tr>`;
+    }
+    html += `</tbody></table></div>`;
+    document.getElementById('dashboard').innerHTML = html;
+  }
+
+  async function fetchData() {
+    if (currentTable === "events") {
+      let r = await fetch('/api/collision_events');
+      let data = await r.json();
+      renderEvents(data);
+    } else {
+      let r = await fetch('/api/system_metrics');
+      let data = await r.json();
+      renderMetrics(data);
+    }
+  }
+
+  // Only one place for navigation logic, keep action handlers correct!
+  document.getElementById('btn-events').onclick = function() {
+    currentTable = "events";
+    fetchData();
+  };
+  document.getElementById('btn-metrics').onclick = function() {
+    currentTable = "metrics";
+    fetchData();
+  };
+
+  setInterval(fetchData, 2000);
+  fetchData();
+  </script>
+</body>
+</html>
