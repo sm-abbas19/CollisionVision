@@ -3,120 +3,197 @@
 <head>
   <meta charset="UTF-8">
   <title>Collision Monitoring Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    }
+    /* Row animation */
+    tr {
+      transition: background 0.2s;
+    }
+    /* Button active underline */
+    .nav-active {
+      position: relative;
+    }
+    .nav-active:after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0;
+      bottom: -4px; height: 3px;
+      background: linear-gradient(90deg,#2563eb,#22d3ee);
+      border-radius:6px;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans">
+<body class="bg-gradient-to-br from-blue-50 via-white to-teal-50 min-h-screen">
 
-  <header class="bg-white shadow p-6 text-center">
-    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
-      🚧 Collision Monitoring Dashboard
+  <header class="bg-white/90 backdrop-blur shadow-md p-7 mb-6">
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight text-gray-800 flex items-center justify-center gap-4 select-none">
+      <span class="bg-blue-600 text-white rounded-full px-2 py-1 text-lg shadow"><svg fill="none" width="25" height="25" class="inline mr-2" viewBox="0 0 24 24"><path d="M16 19h6l-1.68-7.04A7.996 7.996 0 0021 10c0-4.42-3.58-8-8-8S5 5.58 5 10c0 .65.08 1.27.19 1.89L3.11 18.64A1.998 1.998 0 005 21h10M6 22a2 2 0 104 0m4-3h6l-1.68-7.04M21 10c0-4.42-3.58-8-8-8S5 5.58 5 10c0 .65.08 1.27.19 1.89M10 22a2 2 0 104 0" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+      Collision Monitoring Dashboard
     </h1>
+    <div class="text-center text-gray-500 mt-1 text-sm font-medium">Monitor and analyze real-time collision events & system metrics</div>
   </header>
 
-  <!-- Navigation: Only one! Use <button> not <a> for switching views -->
-  <nav class="flex justify-center gap-4 my-6">
-    <button id="btn-events" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded-lg transition">
+  <!-- Stylish Navigation -->
+  <nav class="flex justify-center gap-4 my-4">
+    <button id="btn-events" class="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold border border-blue-600 text-blue-700 bg-blue-50 shadow-sm hover:bg-blue-600 hover:text-white transition focus:ring-2 ring-blue-300 outline-none group" title="View collision events">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <rect x="3" y="8" width="18" height="13" rx="2" fill="currentColor" class="group-hover:text-white text-blue-500"></rect>
+        <path d="M16.73 7A6 6 0 1 0 7 16.73" stroke="currentColor" class="group-hover:text-white text-blue-900" stroke-width="2" stroke-linecap="round"/>
+      </svg>
       Collision Events
     </button>
-    <button id="btn-metrics" class="bg-green-700 hover:bg-green-800 text-white px-5 py-2 rounded-lg transition">
+    <button id="btn-metrics" class="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold border border-teal-600 text-teal-700 bg-teal-50 shadow-sm hover:bg-teal-600 hover:text-white transition focus:ring-2 ring-teal-300 outline-none group" title="View system metrics">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+        <rect width="6" height="15" x="3" y="6" rx="2" fill="currentColor" class="group-hover:text-white text-teal-400"/>
+        <rect width="6" height="10" x="9" y="11" rx="2" fill="currentColor" class="group-hover:text-white text-teal-500"/>
+        <rect width="6" height="18" x="15" y="3" rx="2" fill="currentColor" class="group-hover:text-white text-teal-700"/>
+      </svg>
       System Metrics
     </button>
   </nav>
 
-  <main id="dashboard" class="w-[95%] md:w-4/5 mx-auto overflow-x-auto"></main>
+  <main id="dashboard" class="w-[97%] md:w-4/5 mx-auto mt-2 mb-10"></main>
+
+  <footer class="text-center text-xs text-gray-400 py-4 mt-12 opacity-80 select-none">
+    &copy; 2025 CollisionVision — Real-Time Monitoring
+  </footer>
 
   <script>
-  let currentTable = "events";
+    let currentTable = "events";
+    const eventsBtn = document.getElementById('btn-events');
+    const metricsBtn = document.getElementById('btn-metrics');
 
-  function renderEvents(events) {
-    let html = `
-      <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
-      <table class="min-w-full text-sm text-left text-gray-700">
-        <thead class="bg-gray-200 text-gray-700 uppercase text-xs">
+    // Add nav highlight
+    function setActiveNav() {
+      eventsBtn.classList.toggle('nav-active', currentTable === "events");
+      metricsBtn.classList.toggle('nav-active', currentTable === "metrics");
+    }
+
+    function renderEvents(events) {
+      let badge = t => {
+        if(t === 'collision') return `<span class="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold shadow">Collision</span>`;
+        if(t === 'near_miss') return `<span class="bg-yellow-400 text-gray-900 px-2 py-1 rounded text-xs font-bold shadow">Near Miss</span>`;
+        if(t === 'warning') return `<span class="bg-blue-400 text-white px-2 py-1 rounded text-xs font-bold shadow">Warning</span>`;
+        return `<span class="bg-gray-300 px-2 py-1 rounded text-xs font-bold">Unknown</span>`;
+      };
+      let html = `
+      <div class="shadow-xl rounded-2xl bg-white/95 ring-1 ring-gray-100 p-4 md:p-7 mb-4">
+      <div class="mb-3 flex items-center gap-2 text-lg font-bold text-gray-700">
+        <svg width="21" height="21" fill="none" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2" fill="#2563eb"/><path d="M16.73 7A6 6 0 1 0 7 16.73" stroke="#1e293b" stroke-width="2"/></svg>
+        Most Recent Collision Events
+      </div>
+      <table class="min-w-full text-sm text-left text-gray-700 bg-white rounded-lg overflow-hidden">
+        <thead class="bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 text-gray-500 font-bold uppercase text-xs">
           <tr>
-            <th class="px-6 py-3">Time</th>
-            <th class="px-6 py-3">Type</th>
-            <th class="px-6 py-3">Severity</th>
-            <th class="px-6 py-3">Prob</th>
-            <th class="px-6 py-3">Dist</th>
-            <th class="px-6 py-3">Objects</th>
+            <th class="px-5 py-3">Time</th>
+            <th class="px-5 py-3">Type</th>
+            <th class="px-5 py-3">Severity</th>
+            <th class="px-5 py-3">Prob</th>
+            <th class="px-5 py-3">Dist</th>
+            <th class="px-5 py-3">Objects</th>
           </tr>
         </thead>
         <tbody>`;
-    for (let ev of events) {
-      let bgClass = '';
-      // Use clearly different color styles (Tailwind color classes)
-      if (ev.event_type === "collision") bgClass = "bg-red-100 text-red-800";
-      else if (ev.event_type === "near_miss") bgClass = "bg-yellow-100 text-yellow-900";
-      else if (ev.event_type === "warning") bgClass = "bg-blue-100 text-blue-800";
-      html += `
-        <tr class="${bgClass} hover:bg-opacity-75 transition">
-          <td class="px-6 py-4">${ev.timestamp || ''}</td>
-          <td class="px-6 py-4">${ev.event_type}</td>
-          <td class="px-6 py-4">${ev.severity || ''}</td>
-          <td class="px-6 py-4">${ev.probability !== undefined ? ev.probability.toFixed(2) : ''}</td>
-          <td class="px-6 py-4">${ev.distance !== undefined ? ev.distance.toFixed(2) : ''}</td>
-          <td class="px-6 py-4">${ev.object1_class} & ${ev.object2_class}</td>
-        </tr>`;
-    }
-    html += `</tbody></table></div>`;
-    document.getElementById('dashboard').innerHTML = html;
-  }
-
-  function renderMetrics(metrics) {
-    let html = `
-      <div class="overflow-x-auto shadow-lg rounded-lg bg-white">
-      <table class="min-w-full text-sm text-left text-gray-700">
-        <thead class="bg-gray-200 text-gray-700 uppercase text-xs">
+      if (!events || events.length === 0) {
+        html += `
           <tr>
-            <th class="px-6 py-3">Time</th>
-            <th class="px-6 py-3">FPS</th>
-            <th class="px-6 py-3">Total Objects</th>
-            <th class="px-6 py-3">Active Tracks</th>
-            <th class="px-6 py-3">CPU (%)</th>
-            <th class="px-6 py-3">MEM (%)</th>
+            <td colspan="6" class="px-5 py-6 text-center text-gray-400">No collision events found.</td>
           </tr>
-        </thead>
-        <tbody>`;
-    for (let m of metrics) {
-      html += `
-        <tr class="hover:bg-gray-100 transition">
-          <td class="px-6 py-4">${m.timestamp || ''}</td>
-          <td class="px-6 py-4">${m.fps}</td>
-          <td class="px-6 py-4">${m.total_objects_detected}</td>
-          <td class="px-6 py-4">${m.active_tracks}</td>
-          <td class="px-6 py-4">${m.cpu_usage}</td>
-          <td class="px-6 py-4">${m.memory_usage}</td>
-        </tr>`;
+        `;
+      } else {
+        for (let ev of events) {
+          let rowStyle = '';
+          // Subtle row highlight for type
+          if (ev.event_type === "collision") rowStyle = "bg-red-50/60";
+          else if (ev.event_type === "near_miss") rowStyle = "bg-yellow-50/80";
+          else if (ev.event_type === "warning") rowStyle = "bg-blue-50/70";
+          html += `
+            <tr class="${rowStyle} hover:bg-gray-100/90 transition-all duration-150">
+              <td class="px-5 py-4 font-mono">${ev.timestamp || ''}</td>
+              <td class="px-5 py-4">${badge(ev.event_type)}</td>
+              <td class="px-5 py-4 text-center">${ev.severity || ''}</td>
+              <td class="px-5 py-4">${ev.probability !== undefined ? ev.probability.toFixed(2) : ''}</td>
+              <td class="px-5 py-4">${ev.distance !== undefined ? ev.distance.toFixed(2) : ''}</td>
+              <td class="px-5 py-4">${ev.object1_class} <span class="text-gray-300 font-normal">&</span> ${ev.object2_class}</td>
+            </tr>`;
+        }
+      }
+      html += `</tbody></table></div>`;
+      document.getElementById('dashboard').innerHTML = html;
     }
-    html += `</tbody></table></div>`;
-    document.getElementById('dashboard').innerHTML = html;
-  }
 
-  async function fetchData() {
-    if (currentTable === "events") {
-      let r = await fetch('/api/collision_events');
-      let data = await r.json();
-      renderEvents(data);
-    } else {
-      let r = await fetch('/api/system_metrics');
-      let data = await r.json();
-      renderMetrics(data);
+    function renderMetrics(metrics) {
+      let html = `
+      <div class="shadow-xl rounded-2xl bg-white/95 ring-1 ring-gray-100 p-4 md:p-7 mb-4">
+        <div class="mb-3 flex items-center gap-2 text-lg font-bold text-gray-700">
+          <svg width="21" height="21" fill="none" viewBox="0 0 24 24"><rect width="6" height="15" x="3" y="6" rx="2" fill="#14b8a6"/><rect width="6" height="10" x="9" y="11" rx="2" fill="#22d3ee"/><rect width="6" height="18" x="15" y="3" rx="2" fill="#0f766e"/></svg>
+          Recent System Metrics
+        </div>
+        <table class="min-w-full text-sm text-left text-gray-700 bg-white rounded-lg overflow-hidden">
+          <thead class="bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 text-gray-500 font-bold uppercase text-xs">
+            <tr>
+              <th class="px-5 py-3">Time</th>
+              <th class="px-5 py-3">FPS</th>
+              <th class="px-5 py-3">Total Objects</th>
+              <th class="px-5 py-3">Active Tracks</th>
+              <th class="px-5 py-3">CPU (%)</th>
+              <th class="px-5 py-3">MEM (%)</th>
+            </tr>
+          </thead>
+          <tbody>`;
+      if (!metrics || metrics.length === 0) {
+        html += `
+          <tr>
+            <td colspan="6" class="px-5 py-6 text-center text-gray-400">No metrics logged yet.</td>
+          </tr>
+        `;
+      } else {
+        for (let m of metrics) {
+          html += `
+            <tr class="hover:bg-teal-50/60 transition-all duration-150">
+              <td class="px-5 py-4 font-mono">${m.timestamp || ''}</td>
+              <td class="px-5 py-4">${m.fps}</td>
+              <td class="px-5 py-4">${m.total_objects_detected}</td>
+              <td class="px-5 py-4">${m.active_tracks}</td>
+              <td class="px-5 py-4">${m.cpu_usage}</td>
+              <td class="px-5 py-4">${m.memory_usage}</td>
+            </tr>`;
+        }
+      }
+      html += `</tbody></table></div>`;
+      document.getElementById('dashboard').innerHTML = html;
     }
-  }
 
-  // Only one place for navigation logic, keep action handlers correct!
-  document.getElementById('btn-events').onclick = function() {
-    currentTable = "events";
-    fetchData();
-  };
-  document.getElementById('btn-metrics').onclick = function() {
-    currentTable = "metrics";
-    fetchData();
-  };
+    async function fetchData() {
+      setActiveNav();
+      if (currentTable === "events") {
+        let r = await fetch('/api/collision_events');
+        let data = await r.json();
+        renderEvents(data);
+      } else {
+        let r = await fetch('/api/system_metrics');
+        let data = await r.json();
+        renderMetrics(data);
+      }
+    }
 
-  setInterval(fetchData, 2000);
-  fetchData();
+    eventsBtn.onclick = function() {
+      currentTable = "events";
+      fetchData();
+    };
+    metricsBtn.onclick = function() {
+      currentTable = "metrics";
+      fetchData();
+    };
+
+    setActiveNav();
+    setInterval(fetchData, 3000);
+    fetchData();
   </script>
 </body>
 </html>

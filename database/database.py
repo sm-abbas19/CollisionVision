@@ -3,6 +3,9 @@ from psycopg2.extras import RealDictCursor
 import threading
 from CollisionVision.config.config import Config
 import logging
+from datetime import datetime
+import pytz  # <-- Add this import
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -37,11 +40,15 @@ class DatabaseManager:
                 conn = self.get_connection()
                 cursor = conn.cursor()
 
+                # Get current PKT time
+                pkt = pytz.timezone('Asia/Karachi')
+                pkt_now = datetime.now(pkt)
+
                 insert_query = """
                                INSERT INTO collision_events
                                (event_type, probability, distance, object1_id, object2_id,
-                                object1_class, object2_class, frame_number, severity)
-                               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id; \
+                                object1_class, object2_class, frame_number, severity, timestamp)
+                               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id; \
                                """
 
                 cursor.execute(insert_query, (
@@ -53,7 +60,8 @@ class DatabaseManager:
                     event_data.get('object1_class'),
                     event_data.get('object2_class'),
                     event_data.get('frame_number'),
-                    event_data.get('severity')
+                    event_data.get('severity'),
+                    pkt_now  # Insert PKT time
                 ))
 
                 event_id = cursor.fetchone()[0]
@@ -75,10 +83,14 @@ class DatabaseManager:
                 conn = self.get_connection()
                 cursor = conn.cursor()
 
+                # Get current PKT time
+                pkt = pytz.timezone('Asia/Karachi')
+                pkt_now = datetime.now(pkt)
+
                 insert_query = """
                                INSERT INTO system_metrics
-                                   (fps, total_objects_detected, active_tracks, memory_usage, cpu_usage)
-                               VALUES (%s, %s, %s, %s, %s) RETURNING id; \
+                                   (fps, total_objects_detected, active_tracks, memory_usage, cpu_usage, timestamp)
+                               VALUES (%s, %s, %s, %s, %s, %s) RETURNING id; \
                                """
 
                 cursor.execute(insert_query, (
@@ -86,7 +98,8 @@ class DatabaseManager:
                     metrics_data.get('total_objects_detected'),
                     metrics_data.get('active_tracks'),
                     metrics_data.get('memory_usage'),
-                    metrics_data.get('cpu_usage')
+                    metrics_data.get('cpu_usage'),
+                    pkt_now  # Insert PKT time
                 ))
 
                 metrics_id = cursor.fetchone()[0]
@@ -100,6 +113,7 @@ class DatabaseManager:
         except psycopg2.Error as e:
             logger.error(f"Error logging system metrics: {e}")
             raise
+
 
     def get_recent_events(self, limit=100, table_name="collision_events"):
         """
